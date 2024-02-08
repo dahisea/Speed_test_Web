@@ -1,68 +1,47 @@
-<!-- Web.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Load Test Panel</title>
+  <title>Load Testing Panel</title>
 </head>
 <body>
-  <h1>Load Test Panel</h1>
+  <h1>Load Testing Panel</h1>
   <form id="loadTestForm">
-    <label for="targetUrl">Target URL:</label>
-    <input type="text" id="targetUrl" name="targetUrl"><br><br>
-    
-    <label for="method">Request Method:</label>
+    <label for="url">Target URL:</label><br>
+    <input type="text" id="url" name="url" value="https://example.com"><br>
+    <label for="method">Request Method:</label><br>
     <select id="method" name="method">
       <option value="GET">GET</option>
       <option value="POST">POST</option>
       <option value="HEAD">HEAD</option>
-    </select><br><br>
-    
-    <label for="numThreads">Number of Threads:</label>
-    <input type="number" id="numThreads" name="numThreads" min="1"><br><br>
-    
-    <label for="numRequests">Number of Requests:</label>
-    <input type="number" id="numRequests" name="numRequests" min="1"><br><br>
-    
-    <button type="button" onclick="startLoadTest()">Start Load Test</button>
-    <button type="button" onclick="stopLoadTest()">Stop Load Test</button>
+    </select><br>
+    <label for="threads">Number of Threads:</label><br>
+    <input type="number" id="threads" name="threads" value="1"><br>
+    <label for="requests">Number of Requests per Thread:</label><br>
+    <input type="number" id="requests" name="requests" value="10"><br>
+    <button type="submit" id="startButton">Start Load Test</button>
+    <button type="button" id="stopButton">Stop Load Test</button>
   </form>
-
   <div id="result"></div>
-
   <script>
-    async function startLoadTest() {
-      const targetUrl = document.getElementById('targetUrl').value
-      const method = document.getElementById('method').value
-      const numThreads = document.getElementById('numThreads').value
-      const numRequests = document.getElementById('numRequests').value
+    document.getElementById('loadTestForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const url = formData.get('url');
+      const method = formData.get('method');
+      const threads = formData.get('threads');
+      const requests = formData.get('requests');
+      const response = await fetch(`/work?method=${method}&url=${url}&threads=${threads}&requests=${requests}`);
+      const data = await response.text();
+      document.getElementById('result').innerText = data;
+    });
 
-      const response = await fetch('/work', {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'start',
-          targetUrl,
-          method,
-          numThreads,
-          numRequests
-        })
-      })
-
-      const result = await response.text()
-      document.getElementById('result').innerText = result
-    }
-
-    async function stopLoadTest() {
-      const response = await fetch('/work', {
-        method: 'POST',
-        body: JSON.stringify({ action: 'stop' })
-      })
-
-      const result = await response.text()
-      document.getElementById('result').innerText = result
-    }
+    document.getElementById('stopButton').addEventListener('click', async () => {
+      const response = await fetch(`/work?stop=true`);
+      const data = await response.text();
+      document.getElementById('result').innerText = data;
+    });
   </script>
 </body>
 </html>
