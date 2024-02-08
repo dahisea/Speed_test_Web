@@ -1,3 +1,5 @@
+<!-- Web.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,40 +10,69 @@
 <body>
   <h1>Load Testing Panel</h1>
   <form id="loadTestForm">
-    <label for="url">Target URL:</label><br>
-    <input type="text" id="url" name="url" value="https://example.com"><br>
-    <label for="method">Request Method:</label><br>
+    <label for="targetURL">Target URL:</label>
+    <input type="text" id="targetURL" name="targetURL" required><br><br>
+    
+    <label for="method">Request Method:</label>
     <select id="method" name="method">
       <option value="GET">GET</option>
       <option value="POST">POST</option>
       <option value="HEAD">HEAD</option>
-    </select><br>
-    <label for="threads">Number of Threads:</label><br>
-    <input type="number" id="threads" name="threads" value="1"><br>
-    <label for="requests">Number of Requests per Thread:</label><br>
-    <input type="number" id="requests" name="requests" value="10"><br>
-    <button type="submit" id="startButton">Start Load Test</button>
-    <button type="button" id="stopButton">Stop Load Test</button>
+    </select><br><br>
+    
+    <label for="numThreads">Number of Threads:</label>
+    <input type="number" id="numThreads" name="numThreads" min="1" required><br><br>
+    
+    <label for="numRequests">Number of Requests:</label>
+    <input type="number" id="numRequests" name="numRequests" min="1" required><br><br>
+    
+    <button type="button" onclick="startLoadTest()">Start Load Test</button>
+    <button type="button" onclick="stopLoadTest()">Stop Load Test</button>
   </form>
-  <div id="result"></div>
+  
+  <div id="results"></div>
+  
   <script>
-    document.getElementById('loadTestForm').addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const formData = new FormData(event.target);
-      const url = formData.get('url');
-      const method = formData.get('method');
-      const threads = formData.get('threads');
-      const requests = formData.get('requests');
-      const response = await fetch(`/work?method=${method}&url=${url}&threads=${threads}&requests=${requests}`);
-      const data = await response.text();
-      document.getElementById('result').innerText = data;
-    });
-
-    document.getElementById('stopButton').addEventListener('click', async () => {
-      const response = await fetch(`/work?stop=true`);
-      const data = await response.text();
-      document.getElementById('result').innerText = data;
-    });
+    async function startLoadTest() {
+      const targetURL = document.getElementById('targetURL').value
+      const method = document.getElementById('method').value
+      const numThreads = document.getElementById('numThreads').value
+      const numRequests = document.getElementById('numRequests').value
+      
+      const response = await fetch('https://booter.loli.in.eu.org/work?targetURL=' + encodeURIComponent(targetURL) + '&method=' + method + '&numThreads=' + numThreads + '&numRequests=' + numRequests, {
+        method: 'POST',
+        body: 'start'
+      })
+      
+      const data = await response.json()
+      displayResults(data)
+    }
+    
+    async function stopLoadTest() {
+      const response = await fetch('/work', {
+        method: 'POST',
+        body: 'stop'
+      })
+      
+      const message = await response.text()
+      document.getElementById('results').innerText = message
+    }
+    
+    function displayResults(data) {
+      const resultsDiv = document.getElementById('results')
+      resultsDiv.innerHTML = ''
+      
+      data.forEach((result, index) => {
+        const resultDiv = document.createElement('div')
+        resultDiv.innerHTML = `
+          <h2>Thread ${index + 1}</h2>
+          <p>Successes: ${result.successes}</p>
+          <p>Total Time: ${result.totalTime} ms</p>
+          <p>Delays: ${result.delays.join(', ')} ms</p>
+        `
+        resultsDiv.appendChild(resultDiv)
+      })
+    }
   </script>
 </body>
 </html>
