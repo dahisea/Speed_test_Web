@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Load Testing Dashboard</title>
+</head>
+<body>
+<h1>Load Testing Dashboard</h1>
+<p>Status: <span id="status">Not testing</span></p>
+<p>Success: <span id="success">0</span></p>
+<form id="controlForm">
+<label for="threads">Threads:</label>
+<input type="number" id="threads" name="threads" min="1" value="1"><br><br>
+<label for="method">Method:</label>
+<select id="method" name="method">
+<option value="GET">GET</option>
+<option value="POST">POST</option>
+<option value="HEAD">HEAD</option>
+</select><br><br>
+<label for="requests">Requests:</label>
+<input type="number" id="requests" name="requests" min="1" value="1"><br><br>
+<label for="target">Target URL:</label>
+<input type="text" id="target" name="target" required><br><br>
+<button type="button" onclick="startTest()">Start Test</button>
+<button type="button" onclick="stopTest()">Stop Test</button>
+</form>
+<script>
+async function startTest() {
+  const threads = parseInt(document.getElementById('threads').value);
+  const method = document.getElementById('method').value;
+  const requests = parseInt(document.getElementById('requests').value);
+  const target = document.getElementById('target').value;
+  const response = await fetch('https://booter.loli.in.eu.org/work', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      action: 'start',
+      threads,
+      method,
+      requests,
+      target
+    })
+  });
+  const data = await response.text();
+  document.getElementById('status').innerText = data;
+}
+
+async function stopTest() {
+  const response = await fetch('https://booter.loli.in.eu.org/work', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      action: 'stop'
+    })
+  });
+  const data = await response.text();
+  document.getElementById('status').innerText = data;
+}
+
+setInterval(async function() {
+  const response = await fetch('https://booter.loli.in.eu.org/work');
+  const data = await response.json();
+  let successCount = 0;
+  for (const result of data) {
+    if (result.success) {
+      successCount++;
+    }
+  }
+  document.getElementById('success').innerText = successCount;
+}, 1000);
+</script>
+</body>
+</html>
